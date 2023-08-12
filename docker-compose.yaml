@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+
+  mongo_user:
+    container_name: mongo_db_organization
+    image: mongo:6.0
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rootuser
+      MONGO_INITDB_ROOT_PASSWORD: rootpass
+      MONGO_INITDB_DATABASE: db_user
+    healthcheck:
+      test: [ "CMD","mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    ports:
+      - "27017:27017"
+    volumes:
+      - volume_mongo_db_user:/data/db
+    networks:
+      - mongo-express
+
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: rootuser
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rootpass
+      ME_CONFIG_MONGODB_SERVER: mongo_user
+      ME_CONFIG_MONGODB_PORT: "27017"
+    ports:
+      - "8181:8081"
+    networks:
+      - mongo-express
+    depends_on:
+      mongo_user:
+        condition: service_healthy
+
+volumes:
+  volume_mongo_db_user:
+    external: false
+
+networks:
+  mongo-express:
